@@ -138,12 +138,12 @@ class GameViewModel : ViewModel() {
                 enterSelected()
                 return
             }
-            state = state.copy(highlightedId = ids[selectionStep % n])
+            state = state.copy(highlightedId = ids[selectionStep % n], isSlowPhase = true)
             selectionStep++
             slowPhaseStepsLeft--
             delay = slowPhaseDelay
         } else {
-            state = state.copy(highlightedId = ids[selectionStep % n])
+            state = state.copy(highlightedId = ids[selectionStep % n], isSlowPhase = false)
             selectionStep++
             delay = 80L
         }
@@ -183,6 +183,11 @@ class GameViewModel : ViewModel() {
         winnerTimer?.cancel()
         selectionRunnable?.let { handler.removeCallbacks(it) }
         countdownTimer?.cancel()
+
+        val savedWinnerId = winnerId
+        val savedWinnerFingers = lockedFingers.toMap()
+        val savedShape = state.fingerShape
+
         activeFingers.clear()
         lockedFingers = emptyMap()
         colorPool.clear()
@@ -190,7 +195,12 @@ class GameViewModel : ViewModel() {
         selectionStep = 0
         slowPhaseStarted = false
         winnerId = -1
-        state = GameSnapshot()
+
+        state = GameSnapshot(
+            fingerShape = savedShape,
+            lastWinnerId = savedWinnerId,
+            lastWinnerFingers = savedWinnerFingers,
+        )
         publish()
     }
 

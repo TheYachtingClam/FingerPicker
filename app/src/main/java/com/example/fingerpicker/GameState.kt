@@ -17,7 +17,7 @@ val FingerColors = listOf(
 )
 
 enum class Phase { WAITING, COUNTDOWN, SELECTING, SELECTED }
-enum class FingerShape { CIRCLE, SQUARE }
+enum class FingerShape { CIRCLE, SQUARE, STICK_FIGURE }
 
 data class FingerData(val position: Offset, val color: Color)
 
@@ -30,4 +30,7 @@ data class GameSnapshot(
     val countdown: Int = 10,
     val winnerCountdown: Int = 10,
     val fingerShape: FingerShape = FingerShape.CIRCLE,
+    val lastWinnerId: Int = -1,
+    val lastWinnerFingers: Map<Int, FingerData> = emptyMap(),
+    val isSlowPhase: Boolean = false,
 )
