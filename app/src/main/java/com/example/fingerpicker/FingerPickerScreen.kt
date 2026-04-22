@@ -4,7 +4,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel) {
+fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel, onClose: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -40,7 +45,22 @@ fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel) {
             Phase.WAITING -> WaitingOverlay()
             Phase.COUNTDOWN -> CountdownOverlay(snapshot.countdown, snapshot.activeFingers.size)
             Phase.SELECTING -> Unit
-            Phase.SELECTED -> SelectedOverlay()
+            Phase.SELECTED -> SelectedOverlay(snapshot.winnerCountdown)
+        }
+
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Close",
+                tint = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
@@ -83,7 +103,7 @@ private fun CountdownOverlay(countdown: Int, fingerCount: Int) {
 }
 
 @Composable
-private fun SelectedOverlay() {
+private fun SelectedOverlay(countdown: Int) {
     Box(modifier = Modifier.fillMaxSize()) {
         Text(
             text = "Chosen!",
@@ -95,7 +115,7 @@ private fun SelectedOverlay() {
                 .padding(top = 32.dp)
         )
         Text(
-            text = "Tap to play again",
+            text = "New game in $countdown…",
             color = Color.White.copy(alpha = 0.5f),
             fontSize = 16.sp,
             modifier = Modifier
@@ -106,7 +126,7 @@ private fun SelectedOverlay() {
 }
 
 private fun DrawScope.drawFingers(fingers: Map<Int, FingerData>, highlightedId: Int?) {
-    val radius = 120f
+    val radius = 170f
     for ((id, finger) in fingers) {
         val alpha = when {
             highlightedId == null -> 1f      // countdown: all full
@@ -118,18 +138,15 @@ private fun DrawScope.drawFingers(fingers: Map<Int, FingerData>, highlightedId: 
 }
 
 private fun DrawScope.drawWinner(fingers: Map<Int, FingerData>, winnerId: Int) {
-    val radius = 120f
+    val radius = 170f
     fingers[winnerId]?.let { drawRing(it.position, it.color, 1f, radius) }
 }
 
 private fun DrawScope.drawRing(pos: Offset, color: Color, alpha: Float, radius: Float) {
-    // Outer glow layers
-    drawCircle(color = color.copy(alpha = alpha * 0.08f), radius = radius + 40f, center = pos, style = Stroke(width = 36f))
-    drawCircle(color = color.copy(alpha = alpha * 0.15f), radius = radius + 18f, center = pos, style = Stroke(width = 20f))
-    // Main ring
-    drawCircle(color = color.copy(alpha = alpha), radius = radius, center = pos, style = Stroke(width = 6f))
-    // Center dot
-    drawCircle(color = color.copy(alpha = alpha * 0.3f), radius = 16f, center = pos)
+    drawCircle(color = color.copy(alpha = alpha * 0.08f), radius = radius + 54f, center = pos, style = Stroke(width = 48f))
+    drawCircle(color = color.copy(alpha = alpha * 0.15f), radius = radius + 26f, center = pos, style = Stroke(width = 30f))
+    drawCircle(color = color.copy(alpha = alpha), radius = radius, center = pos, style = Stroke(width = 16f))
+    drawCircle(color = color.copy(alpha = alpha * 0.3f), radius = 22f, center = pos)
 }
 
 private fun Modifier.multiTouchInput(vm: GameViewModel): Modifier =

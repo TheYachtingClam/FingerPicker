@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         vm.onStateChanged = { snapshot = vm.state }
 
         setContent {
-            FingerPickerScreen(snapshot = snapshot, vm = vm)
+            FingerPickerScreen(snapshot = snapshot, vm = vm, onClose = { finish() })
         }
     }
 }

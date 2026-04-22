@@ -27,4 +27,5 @@ data class GameSnapshot(
     val highlightedId: Int = -1,
     val winnerId: Int = -1,
     val countdown: Int = 10,
+    val winnerCountdown: Int = 10,
 )

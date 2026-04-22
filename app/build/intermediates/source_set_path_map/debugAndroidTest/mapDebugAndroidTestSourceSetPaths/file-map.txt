@@ -1,0 +1,4 @@
+com.example.fingerpicker.test.app-androidTest-0 /Users/nickmayne/git/FingerPicker/app/build/generated/res/resValues/androidTest/debug
+com.example.fingerpicker.test.app-mergeDebugAndroidTestResources-1 /Users/nickmayne/git/FingerPicker/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.example.fingerpicker.test.app-mergeDebugAndroidTestResources-2 /Users/nickmayne/git/FingerPicker/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.example.fingerpicker.test.app-debugAndroidTest-3 /Users/nickmayne/git/FingerPicker/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources

@@ -21,6 +21,7 @@ class GameViewModel : ViewModel() {
 
     private var countdownTimer: CountDownTimer? = null
     private var selectionRunnable: Runnable? = null
+    private var winnerTimer: CountDownTimer? = null
 
     private var selectionStep = 0
     private var selectionStartMs = 0L
@@ -51,10 +52,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun onFingerUp(pointerId: Int) {
-        if (state.phase == Phase.SELECTING || state.phase == Phase.SELECTED) {
-            reset()
-            return
-        }
+        if (state.phase == Phase.SELECTING || state.phase == Phase.SELECTED) return
         activeFingers.remove(pointerId)?.let { colorPool.addFirst(it.color) }
         if (state.phase == Phase.COUNTDOWN && activeFingers.isEmpty()) {
             countdownTimer?.cancel()
@@ -95,14 +93,7 @@ class GameViewModel : ViewModel() {
         val ids = lockedFingers.keys.toList()
         if (ids.size == 1) {
             winnerId = ids[0]
-            state = state.copy(
-                phase = Phase.SELECTED,
-                lockedFingers = lockedFingers,
-                activeFingers = emptyMap(),
-                highlightedId = winnerId,
-                winnerId = winnerId
-            )
-            publish()
+            enterSelected()
             return
         }
 
@@ -137,8 +128,7 @@ class GameViewModel : ViewModel() {
         val delay: Long
         if (slowPhaseStarted) {
             if (slowPhaseStepsLeft == 0) {
-                state = state.copy(phase = Phase.SELECTED, highlightedId = winnerId, winnerId = winnerId)
-                publish()
+                enterSelected()
                 return
             }
             state = state.copy(highlightedId = ids[selectionStep % n])
@@ -157,9 +147,33 @@ class GameViewModel : ViewModel() {
         handler.postDelayed(r, delay)
     }
 
+    // --- Selected display ---
+
+    private fun enterSelected() {
+        winnerTimer?.cancel()
+        state = state.copy(
+            phase = Phase.SELECTED,
+            lockedFingers = lockedFingers,
+            activeFingers = emptyMap(),
+            highlightedId = winnerId,
+            winnerId = winnerId,
+            winnerCountdown = 10
+        )
+        publish()
+        winnerTimer = object : CountDownTimer(10_000L, 1000L) {
+            override fun onTick(ms: Long) {
+                val c = ((ms + 999L) / 1000L).toInt()
+                state = state.copy(winnerCountdown = c)
+                publish()
+            }
+            override fun onFinish() { reset() }
+        }.start()
+    }
+
     // --- Reset ---
 
     private fun reset() {
+        winnerTimer?.cancel()
         selectionRunnable?.let { handler.removeCallbacks(it) }
         countdownTimer?.cancel()
         activeFingers.clear()
@@ -180,6 +194,7 @@ class GameViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        winnerTimer?.cancel()
         selectionRunnable?.let { handler.removeCallbacks(it) }
         countdownTimer?.cancel()
     }
