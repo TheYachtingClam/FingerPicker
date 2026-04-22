@@ -1,4 +1,0 @@
-#Wed Apr 22 11:30:32 PDT 2026
-base.0=/Users/nickmayne/git/FingerPicker/app/build/intermediates/dex/debugAndroidTest/mergeProjectDexDebugAndroidTest/0/classes.dex
-path.0=0/classes.dex
-renamed.0=classes.dex

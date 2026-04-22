@@ -5,15 +5,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -35,9 +45,9 @@ fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel, onClose: () ->
         Canvas(modifier = Modifier.fillMaxSize()) {
             when (snapshot.phase) {
                 Phase.WAITING -> Unit
-                Phase.COUNTDOWN -> drawFingers(snapshot.activeFingers, null)
-                Phase.SELECTING -> drawFingers(snapshot.lockedFingers, snapshot.highlightedId)
-                Phase.SELECTED -> drawWinner(snapshot.lockedFingers, snapshot.winnerId)
+                Phase.COUNTDOWN -> drawFingers(snapshot.activeFingers, null, snapshot.fingerShape)
+                Phase.SELECTING -> drawFingers(snapshot.lockedFingers, snapshot.highlightedId, snapshot.fingerShape)
+                Phase.SELECTED -> drawWinner(snapshot.lockedFingers, snapshot.winnerId, snapshot.fingerShape)
             }
         }
 
@@ -47,6 +57,14 @@ fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel, onClose: () ->
             Phase.SELECTING -> Unit
             Phase.SELECTED -> SelectedOverlay(snapshot.winnerCountdown)
         }
+
+        ShapeDropdown(
+            current = snapshot.fingerShape,
+            onSelect = { vm.setShape(it) },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+        )
 
         IconButton(
             onClick = onClose,
@@ -60,6 +78,42 @@ fun FingerPickerScreen(snapshot: GameSnapshot, vm: GameViewModel, onClose: () ->
                 contentDescription = "Close",
                 tint = Color.White.copy(alpha = 0.6f),
                 modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShapeDropdown(
+    current: FingerShape,
+    onSelect: (FingerShape) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        TextButton(onClick = { expanded = true }) {
+            Text(
+                text = if (current == FingerShape.CIRCLE) "● Circles" else "■ Squares",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 14.sp
+            )
+            Icon(
+                imageVector = Icons.Filled.ArrowDropDown,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("● Circles") },
+                onClick = { onSelect(FingerShape.CIRCLE); expanded = false }
+            )
+            DropdownMenuItem(
+                text = { Text("■ Squares") },
+                onClick = { onSelect(FingerShape.SQUARE); expanded = false }
             )
         }
     }
@@ -125,21 +179,42 @@ private fun SelectedOverlay(countdown: Int) {
     }
 }
 
-private fun DrawScope.drawFingers(fingers: Map<Int, FingerData>, highlightedId: Int?) {
+private fun DrawScope.drawFingers(
+    fingers: Map<Int, FingerData>,
+    highlightedId: Int?,
+    shape: FingerShape
+) {
     val radius = 170f
     for ((id, finger) in fingers) {
         val alpha = when {
-            highlightedId == null -> 1f      // countdown: all full
-            id == highlightedId -> 1f         // selecting: highlighted
-            else -> 0.18f                     // selecting: dimmed
+            highlightedId == null -> 1f
+            id == highlightedId -> 1f
+            else -> 0.18f
         }
-        drawRing(finger.position, finger.color, alpha, radius)
+        drawMarker(finger.position, finger.color, alpha, radius, shape)
     }
 }
 
-private fun DrawScope.drawWinner(fingers: Map<Int, FingerData>, winnerId: Int) {
+private fun DrawScope.drawWinner(
+    fingers: Map<Int, FingerData>,
+    winnerId: Int,
+    shape: FingerShape
+) {
     val radius = 170f
-    fingers[winnerId]?.let { drawRing(it.position, it.color, 1f, radius) }
+    fingers[winnerId]?.let { drawMarker(it.position, it.color, 1f, radius, shape) }
+}
+
+private fun DrawScope.drawMarker(
+    pos: Offset,
+    color: Color,
+    alpha: Float,
+    radius: Float,
+    shape: FingerShape
+) {
+    when (shape) {
+        FingerShape.CIRCLE -> drawRing(pos, color, alpha, radius)
+        FingerShape.SQUARE -> drawSquare(pos, color, alpha, radius)
+    }
 }
 
 private fun DrawScope.drawRing(pos: Offset, color: Color, alpha: Float, radius: Float) {
@@ -147,6 +222,26 @@ private fun DrawScope.drawRing(pos: Offset, color: Color, alpha: Float, radius: 
     drawCircle(color = color.copy(alpha = alpha * 0.15f), radius = radius + 26f, center = pos, style = Stroke(width = 30f))
     drawCircle(color = color.copy(alpha = alpha), radius = radius, center = pos, style = Stroke(width = 16f))
     drawCircle(color = color.copy(alpha = alpha * 0.3f), radius = 22f, center = pos)
+}
+
+private fun DrawScope.drawSquare(pos: Offset, color: Color, alpha: Float, radius: Float) {
+    fun rectAround(pad: Float) = Rect(
+        left = pos.x - radius - pad,
+        top = pos.y - radius - pad,
+        right = pos.x + radius + pad,
+        bottom = pos.y + radius + pad
+    )
+    // Outer glow layers
+    drawRect(color = color.copy(alpha = alpha * 0.08f), topLeft = rectAround(54f).topLeft, size = rectAround(54f).size, style = Stroke(width = 48f))
+    drawRect(color = color.copy(alpha = alpha * 0.15f), topLeft = rectAround(26f).topLeft, size = rectAround(26f).size, style = Stroke(width = 30f))
+    // Main square
+    drawRect(color = color.copy(alpha = alpha), topLeft = rectAround(0f).topLeft, size = rectAround(0f).size, style = Stroke(width = 16f))
+    // Center dot
+    drawRect(
+        color = color.copy(alpha = alpha * 0.3f),
+        topLeft = Offset(pos.x - 22f, pos.y - 22f),
+        size = Size(44f, 44f)
+    )
 }
 
 private fun Modifier.multiTouchInput(vm: GameViewModel): Modifier =

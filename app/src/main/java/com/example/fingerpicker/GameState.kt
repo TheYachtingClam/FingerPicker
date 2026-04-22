@@ -17,6 +17,7 @@ val FingerColors = listOf(
 )
 
 enum class Phase { WAITING, COUNTDOWN, SELECTING, SELECTED }
+enum class FingerShape { CIRCLE, SQUARE }
 
 data class FingerData(val position: Offset, val color: Color)
 
@@ -28,4 +29,5 @@ data class GameSnapshot(
     val winnerId: Int = -1,
     val countdown: Int = 10,
     val winnerCountdown: Int = 10,
+    val fingerShape: FingerShape = FingerShape.CIRCLE,
 )

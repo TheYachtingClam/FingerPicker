@@ -30,6 +30,13 @@ class GameViewModel : ViewModel() {
     private var slowPhaseStepsLeft = 0
     private var winnerId = -1
 
+    // --- Shape ---
+
+    fun setShape(shape: FingerShape) {
+        state = state.copy(fingerShape = shape)
+        publish()
+    }
+
     // --- Touch input ---
 
     fun onFingerDown(pointerId: Int, position: Offset) {
